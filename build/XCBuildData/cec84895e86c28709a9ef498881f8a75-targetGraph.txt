@@ -1,0 +1,4 @@
+Target dependency graph (2 targets)
+SwiftSoup in Pods, no dependencies
+Pods-txtDownloader in Pods, depends on:
+SwiftSoup in Pods (explicit)
