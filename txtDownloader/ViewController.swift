@@ -163,6 +163,10 @@ class ViewController: NSViewController,NSTextFieldDelegate{
     
     
     @IBAction func deleteFileClicked(_ sender: NSButton) {
+        
+        
+        if FileManager.default.fileExists(atPath: filePath) == false {return}
+        
         sender.isEnabled = false
         
         do {
@@ -204,9 +208,10 @@ class ViewController: NSViewController,NSTextFieldDelegate{
         
         let chapter = textFieldChapterIndex.stringValue.count > 1 ? Int(textFieldChapterIndex.stringValue) : 1
         let urlStr = "URL:" + self.textFieldURL.stringValue + "\(chapter!).html"
-        let exportPath = "Export File Path:" + textFieldExportPath.stringValue + fileName
-
-        updateURLAddres(urlStr: urlStr + "\n" + exportPath)
+        
+        let exportPath = (textFieldExportPath.stringValue.hasSuffix("/") ? textFieldExportPath.stringValue : textFieldExportPath.stringValue + "/") + fileName
+        filePath = exportPath
+        updateURLAddres(urlStr: urlStr + "\n" + "Export File Path:" + exportPath)
         
         
         
