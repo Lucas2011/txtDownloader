@@ -1,0 +1,6 @@
+framework module Pods_txtDownloader {
+  umbrella header "Pods-txtDownloader-umbrella.h"
+
+  export *
+  module * { export * }
+}
