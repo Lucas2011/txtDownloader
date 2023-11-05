@@ -13,7 +13,6 @@ class ViewController: NSViewController,NSTextFieldDelegate{
     @IBOutlet weak var displayLabelURL: NSTextField!
     @IBOutlet weak var textFieldChapterIndex: NSTextField!
     @IBOutlet weak var textFieldURL: NSTextField!
-    
     @IBOutlet weak var textFieldExportPath: NSTextField!
     let fileName = "txtDownloader_book.txt"
     var filePath = ""
@@ -41,25 +40,27 @@ class ViewController: NSViewController,NSTextFieldDelegate{
             self.displayLabelURL.stringValue = urlStr
         }
     }
-    
+    /*
+     /Users/lucas/Desktop/
+     8
+     https://667.bqgdi.com/html/137332/
+     */
     
     // MARK: - Download
     
     func downloadURL(url:String, chapter:Int) {
         var chapter = chapter
         // 1. 定义要抓取的多个网页的 URL 列表
-        var bookRetryCount = 0
         var preContent = ""
         var totalRetryTime = 0
         
-        
-        while (bookRetryCount < 9){
+        while (true){
             
             var chapterRetryCount = 0
             var pages = 2
             var urlCombin = ""
                         
-            while (chapterRetryCount < 6) {
+            while (chapterRetryCount < 20) {
                 
                 
                 if chapterRetryCount == 0
@@ -72,14 +73,13 @@ class ViewController: NSViewController,NSTextFieldDelegate{
                 updateURLAddres(urlStr: urlCombin)
                 
                 let issucessed = writeDownURLContentToPath(urlStr: urlCombin, preContents: &preContent, totalRetryTime:&totalRetryTime)
-                if (issucessed == false) {break}
+                if (issucessed == false) {break}else{}
                 chapterRetryCount += 1
             }
             
             chapter += 1
             
             Thread.sleep(forTimeInterval: 0.1)
-            bookRetryCount += 1
             
             if (totalRetryTime > 5) {
                 print("Done")
