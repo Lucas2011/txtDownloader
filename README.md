@@ -1,17 +1,43 @@
-# txtDownloader
-mac app 抓取小说并且成txt 版本
+import Foundation
 
-下载 txtDownloader.zip 直接使用
+class Debouncer {
+    private let delay: TimeInterval
+    private var timer: Timer?
 
+    init(delay: TimeInterval) {
+        self.delay = delay
+    }
 
+    func debounce(action: @escaping (() -> Void)) {
+        timer?.invalidate()
+        timer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { _ in
+            action()
+        }
+    }
+}
 
+class SearchManager {
+    private let debouncer: Debouncer
+    private var currentQuery: String = ""
 
-I hope this email finds you well. I wanted to discuss an issue that has been affecting our team’s productivity lately.
+    init(debounceDelay: TimeInterval) {
+        self.debouncer = Debouncer(delay: debounceDelay)
+    }
 
-As we continue to handle various tasks and projects, it’s become increasingly apparent that the small screens on our laptops are limiting our ability to work efficiently. Many of us find ourselves struggling to effectively manage multiple applications and documents due to the restricted screen real estate.
+    func search(query: String) {
+        // Replace this with your actual search logic
+        print("Searching for: \(query)")
+    }
 
-To overcome this challenge and ensure that we can work at our best, I would like to request that our team be provided with new monitors. By having larger screens, we can better organize our workspaces, view content more comfortably, and ultimately increase our productivity.
+    func handleSearchInput(query: String) {
+        currentQuery = query
+        debouncer.debounce {
+            self.search(query: self.currentQuery)
+        }
+    }
+}
 
-I understand that there may be budgetary considerations, but I believe that the long-term benefits of investing in new monitors will outweigh the initial cost. Additionally, I’m more than willing to assist in researching cost-effective options or provide further justification for this investment.
-
-Thank you for considering this request. I believe that upgrading our monitors will significantly improve our work enviro
+// Usage:
+let searchManager = SearchManager(debounceDelay: 0.5) // Adjust the delay as needed
+searchManager.handleSearchInput(query: "Initial search query")
+// The search method will be called after the debounce delay (0.5 seconds in this example)
