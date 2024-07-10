@@ -2,18 +2,28 @@ NSString *filePath = @"path_to_your_file";
 NSInputStream *inputStream = [NSInputStream inputStreamWithFileAtPath:filePath];
 [inputStream open];
 
-NSMutableString *fileContents = [NSMutableString string];
-NSUInteger bufferSize = 1024; // Adjust the buffer size as per your requirement
-uint8_t buffer[bufferSize];
+NSMutableArray *lines = [NSMutableArray array];
+NSMutableString *currentLine = [NSMutableString string];
 
 while ([inputStream hasBytesAvailable]) {
-    NSInteger bytesRead = [inputStream read:buffer maxLength:bufferSize];
+    uint8_t buffer[1024]; // Adjust the buffer size as per your requirement
+    NSInteger bytesRead = [inputStream read:buffer maxLength:sizeof(buffer)];
     if (bytesRead > 0) {
-        NSString *chunk = [[NSString alloc] initWithBytes:buffer length:bytesRead encoding:NSUTF8StringEncoding];
-        [fileContents appendString:chunk];
+        for (NSInteger i = 0; i < bytesRead; i++) {
+            char character = buffer[i];
+            if (character == '\n') {
+                [lines addObject:[currentLine stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]];
+                [currentLine setString:@""];
+            } else {
+                [currentLine appendFormat:@"%c", character];
+            }
+        }
     }
 }
 
-[inputStream close];
+// Add the last line if any
+if (currentLine.length > 0) {
+    [lines addObject:[currentLine stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]];
+}
 
-NSArray *lines = [fileContents componentsSeparatedByString:@"\n"];
+[inputStream close];
