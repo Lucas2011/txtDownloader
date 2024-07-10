@@ -1,26 +1,19 @@
 NSString *filePath = @"path_to_your_file";
-NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath:filePath];
-if (fileHandle == nil) {
-    NSLog(@"Failed to open file");
-    return;
-}
+NSInputStream *inputStream = [NSInputStream inputStreamWithFileAtPath:filePath];
+[inputStream open];
 
 NSMutableString *fileContents = [NSMutableString string];
-NSData *lineSeparator = [@"\n" dataUsingEncoding:NSUTF8StringEncoding];
+NSUInteger bufferSize = 1024; // Adjust the buffer size as per your requirement
+uint8_t buffer[bufferSize];
 
-while (YES) {
-    NSData *lineData = [fileHandle readDataUpToData:lineSeparator
-                                        withTimeout:0
-                                              error:nil];
-    if (lineData.length == 0) {
-        break;
+while ([inputStream hasBytesAvailable]) {
+    NSInteger bytesRead = [inputStream read:buffer maxLength:bufferSize];
+    if (bytesRead > 0) {
+        NSString *chunk = [[NSString alloc] initWithBytes:buffer length:bytesRead encoding:NSUTF8StringEncoding];
+        [fileContents appendString:chunk];
     }
-    NSString *lineString = [[NSString alloc] initWithData:lineData
-                                                 encoding:NSUTF8StringEncoding];
-    [fileContents appendString:lineString];
-    [fileContents appendString:@"\n"];
 }
 
-[fileHandle closeFile];
+[inputStream close];
 
 NSArray *lines = [fileContents componentsSeparatedByString:@"\n"];
