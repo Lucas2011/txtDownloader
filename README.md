@@ -1,26 +1,26 @@
 NSString *filePath = @"path_to_your_file";
-NSData *fileData = [NSData dataWithContentsOfFile:filePath];
-
-NSUInteger chunkSize = 1024; // Adjust the chunk size as per your requirement
-NSUInteger offset = 0;
-while (offset < fileData.length) {
-    NSUInteger length = MIN(chunkSize, fileData.length - offset);
-    NSData *chunk = [fileData subdataWithRange:NSMakeRange(offset, length)];
-    NSString *chunkString = [[NSString alloc] initWithData:chunk encoding:NSUTF8StringEncoding];
-    // Process each chunk or line here
-    
-    offset += length;
-}
-
-NSString *filePath = @"path_to_your_file";
 NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath:filePath];
-NSData *chunk = nil;
-NSUInteger chunkSize = 1024; // Adjust the chunk size as per your requirement
-
-while ((chunk = [fileHandle readDataOfLength:chunkSize])) {
-    NSString *line = [[NSString alloc] initWithData:chunk encoding:NSUTF8StringEncoding];
-    if (line) {
-        // Process each chunk or line here
-    }
+if (fileHandle == nil) {
+    NSLog(@"Failed to open file");
+    return;
 }
+
+NSMutableString *fileContents = [NSMutableString string];
+NSData *lineSeparator = [@"\n" dataUsingEncoding:NSUTF8StringEncoding];
+
+while (YES) {
+    NSData *lineData = [fileHandle readDataUpToData:lineSeparator
+                                        withTimeout:0
+                                              error:nil];
+    if (lineData.length == 0) {
+        break;
+    }
+    NSString *lineString = [[NSString alloc] initWithData:lineData
+                                                 encoding:NSUTF8StringEncoding];
+    [fileContents appendString:lineString];
+    [fileContents appendString:@"\n"];
+}
+
 [fileHandle closeFile];
+
+NSArray *lines = [fileContents componentsSeparatedByString:@"\n"];
