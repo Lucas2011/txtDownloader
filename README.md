@@ -1,43 +1,26 @@
-import Foundation
+NSString *filePath = @"path_to_your_file";
+NSData *fileData = [NSData dataWithContentsOfFile:filePath];
 
-class Debouncer {
-    private let delay: TimeInterval
-    private var timer: Timer?
-
-    init(delay: TimeInterval) {
-        self.delay = delay
-    }
-
-    func debounce(action: @escaping (() -> Void)) {
-        timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { _ in
-            action()
-        }
-    }
+NSUInteger chunkSize = 1024; // Adjust the chunk size as per your requirement
+NSUInteger offset = 0;
+while (offset < fileData.length) {
+    NSUInteger length = MIN(chunkSize, fileData.length - offset);
+    NSData *chunk = [fileData subdataWithRange:NSMakeRange(offset, length)];
+    NSString *chunkString = [[NSString alloc] initWithData:chunk encoding:NSUTF8StringEncoding];
+    // Process each chunk or line here
+    
+    offset += length;
 }
 
-class SearchManager {
-    private let debouncer: Debouncer
-    private var currentQuery: String = ""
+NSString *filePath = @"path_to_your_file";
+NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath:filePath];
+NSData *chunk = nil;
+NSUInteger chunkSize = 1024; // Adjust the chunk size as per your requirement
 
-    init(debounceDelay: TimeInterval) {
-        self.debouncer = Debouncer(delay: debounceDelay)
-    }
-
-    func search(query: String) {
-        // Replace this with your actual search logic
-        print("Searching for: \(query)")
-    }
-
-    func handleSearchInput(query: String) {
-        currentQuery = query
-        debouncer.debounce {
-            self.search(query: self.currentQuery)
-        }
+while ((chunk = [fileHandle readDataOfLength:chunkSize])) {
+    NSString *line = [[NSString alloc] initWithData:chunk encoding:NSUTF8StringEncoding];
+    if (line) {
+        // Process each chunk or line here
     }
 }
-
-// Usage:
-let searchManager = SearchManager(debounceDelay: 0.5) // Adjust the delay as needed
-searchManager.handleSearchInput(query: "Initial search query")
-// The search method will be called after the debounce delay (0.5 seconds in this example)
+[fileHandle closeFile];
