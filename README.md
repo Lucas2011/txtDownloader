@@ -1,26 +1,27 @@
 ---
 
-Dear [Manager's Name],
+Dear Team,
 
-Thank you for emphasizing the importance of maintaining high standards in our code quality. I understand the critical nature of ensuring that all processes, including unit testing, are followed diligently. Here are the steps I am taking to ensure our team upholds these standards:
+I hope this message finds you well.
 
-1. **Reinforcing Best Practices:** I will remind the team of the importance of following our established coding practices, including the mandatory unit testing for all PRs.
+I want to emphasize the importance of following our established processes, particularly regarding unit testing. Recently, an urgent task was submitted as a PR without undergoing unit testing, which almost caused the system to go down. To prevent similar issues in the future, I am requesting that everyone strictly adhere to the following procedures:
 
-2. **Enhanced Review Process:** I will implement a stricter code review process to ensure that no PR is merged without passing unit tests, regardless of the urgency of the task.
+1. **Mandatory Unit Testing:** Before submitting any PR, ensure that your code has passed all relevant unit tests. This step is essential, even for urgent tasks.
 
-3. **Access to Resources:** I will ensure that all team members have the necessary tools and equipment to perform their tasks, including running unit tests.
+2. **PR Submission:** All PRs must be submitted to channel A in the specified format and must have at least one team member as a code reviewer.
 
-4. **Training and Support:** I will arrange for additional training sessions focused on the importance of unit testing and best practices in code quality. I will also be available to support team members who might face challenges in following these practices.
+3. **Resource Support:** If you lack the necessary tools or equipment to run unit tests, please inform me immediately, and I will provide the required assistance as soon as possible.
 
-5. **Monitoring and Accountability:** I will set up a system to monitor adherence to these practices and hold the team accountable for any lapses. This will include regular check-ins and retrospective meetings to identify and address any issues promptly.
+4. **Strict Code Review:** During code reviews, I will specifically check the execution of unit tests. Any PR that has not passed unit testing will not be merged.
 
-6. **Documentation and Communication:** I will ensure that all processes are well-documented and clearly communicated via email to the team to avoid any ambiguity.
+Unit testing is a crucial step in ensuring the quality of our code and preventing major system issues. Please adhere strictly to these procedures to ensure our workflow proceeds smoothly.
 
-By taking these steps, I aim to reinforce the importance of our coding standards and ensure that we consistently deliver high-quality code.
+Thank you for your cooperation!
 
-Thank you for your guidance and support.
+Best regards,
 
-Best regards,  
 [Your Name]
 
 ---
+
+This letter should clearly communicate the importance of following the unit testing process to your team and provide a framework for addressing any issues that might arise.
