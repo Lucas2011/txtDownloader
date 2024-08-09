@@ -1,13 +1,84 @@
-Starting tests on all devices simultaneously ensures the following:
+#import "ViewController.h"
 
-1. **Consistency**: Testing under the same conditions and time frame ensures comparability of results, minimizing the impact of environmental variables.
+@interface ViewController () <UITableViewDelegate, UITableViewDataSource>
 
-2. **Performance Evaluation**: It provides a more accurate assessment of the system's performance and stability under high load.
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (nonatomic, strong) NSMutableArray *data; // 主数据
+@property (nonatomic, strong) NSMutableArray *expandedData; // 用于跟踪哪些cell是展开的
 
-3. **Concurrency Issues**: It makes it easier to identify and resolve concurrency issues such as resource contention and deadlocks.
+@end
 
-4. **Synchronization Issues**: It helps check if the system's synchronization mechanisms are working correctly, ensuring data consistency and accuracy.
+@implementation ViewController
 
-5. **Time Efficiency**: Simultaneous testing reduces overall testing time and improves efficiency.
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    // 初始化数据
+    self.data = [NSMutableArray arrayWithArray:@[@"Cell 1", @"Cell 2", @"Cell 3"]];
+    self.expandedData = [NSMutableArray array];
+    
+    self.tableView.delegate = self;
+    self.tableView.dataSource = self;
+}
 
-By starting tests simultaneously, you gain a comprehensive understanding of the system's behavior in real-world conditions, ensuring stability and reliability.
+#pragma mark - UITableViewDataSource
+
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+    return 1;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    NSInteger rowCount = self.data.count;
+    for (NSString *expandedCell in self.expandedData) {
+        if ([self.data containsObject:expandedCell]) {
+            rowCount += 3; // 每个展开的cell增加3个额外cell
+        }
+    }
+    return rowCount;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    NSInteger originalIndex = indexPath.row;
+    for (NSString *expandedCell in self.expandedData) {
+        NSInteger index = [self.data indexOfObject:expandedCell];
+        if (index != NSNotFound && originalIndex > index) {
+            originalIndex -= 3;
+        }
+    }
+    
+    if ([self.expandedData containsObject:self.data[originalIndex]]) {
+        NSInteger extraCellIndex = indexPath.row - originalIndex - 1;
+        if (extraCellIndex < 3) {
+            UITableViewCell *extraCell = [tableView dequeueReusableCellWithIdentifier:@"ExtraCell" forIndexPath:indexPath];
+            extraCell.textLabel.text = [NSString stringWithFormat:@"Extra Cell %ld for %@", (long)extraCellIndex + 1, self.data[originalIndex]];
+            return extraCell;
+        }
+    }
+    
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"MainCell" forIndexPath:indexPath];
+    cell.textLabel.text = self.data[originalIndex];
+    return cell;
+}
+
+#pragma mark - UITableViewDelegate
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    NSInteger originalIndex = indexPath.row;
+    for (NSString *expandedCell in self.expandedData) {
+        NSInteger index = [self.data indexOfObject:expandedCell];
+        if (index != NSNotFound && originalIndex > index) {
+            originalIndex -= 3;
+        }
+    }
+    
+    NSString *selectedCell = self.data[originalIndex];
+    if ([self.expandedData containsObject:selectedCell]) {
+        [self.expandedData removeObject:selectedCell];
+    } else {
+        [self.expandedData addObject:selectedCell];
+    }
+    
+    [tableView reloadData];
+}
+
+@end
