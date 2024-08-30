@@ -1,16 +1,31 @@
-1. Update Radars Promptly
-    * Prioritize Radar Assignment Based on Urgency: Limit the number of blocker and release radars each team member handles simultaneously. For instance:
-        * 2 blocker radars / person
-        * 3 release radars/person
-        * 4 radars in a mix of blocker and release radars/person
-    * Daily Stand-ups and Progress Monitoring: Focus on the progress of blocker and release P1 radars during daily stand-ups, allowing team members to discuss any blockers. Use the Green Pine tool to track radar status in real time and automatically send notifications if radars are not resolved within the specified time.
-2. Maintain Code Quality
-    * Discuss Hypothetical Fixes: For issues that cannot be reproduced, discuss with the peer reviewer whether the proposed fixes are reasonable before merging. If possible, create an EB first, have QA validate whether these fixes are effective, and then decide whether to merge them into the branch.
-    * Improve PR Quality and Pre-Merge Validation: Implement a stricter code review process, especially for blocker radar’s PRs. Besides checking the quality of the code, require peer reviewers to understand the issue in the radar and approve the solution before merging the PR to ensure all issues are resolved.
-    * Post-Mortem Analysis: If verification fails in the new build, perform a post-mortem analysis to identify where the problem occurred and how to prevent similar issues in the future.
-3. Manage Insufficient Info Radars
-    * Handle Insufficient Info Radars: If a P1 radar lacks sufficient information, reassign it to QA, requesting them to provide the necessary details within 1 day. If QA does not respond within the specified time, take the following actions:
-        * Request Remote Access: If information is insufficient and the issue is hard to reproduce, try requesting remote access to QA's test environment or device setup.
-        * Send Reminder Emails: Email the QA lead to follow up on the progress of the radar.
-        * Schedule Meetings: Arrange meetings to discuss and resolve the information gaps directly with the QA team, ensuring timely issue resolution.
-    * Issue Analysis: For each radar, provide a root cause analysis to understand and document the underlying issue, which helps prevent similar problems in the future.
+The root causes of regression and validation failures in software development often stem from several key issues:
+
+### 1. **Incomplete or Inadequate Testing:**
+   - **Regression Testing:** If regression tests are not comprehensive or updated to cover new features, changes, or bug fixes, existing functionalities might break unnoticed.
+   - **Validation Testing:** Incomplete validation testing, where the test cases do not cover all the required aspects of a feature, can lead to missed defects.
+
+### 2. **Poor Communication:**
+   - **Requirements Misunderstanding:** If there is a lack of clear communication between stakeholders, developers, and testers, the implemented features might not meet the expected requirements, leading to validation failures.
+   - **Ambiguous Ticket Information:** Inadequate details in QA tickets, such as vague descriptions or missing steps to reproduce issues, can cause developers to make incorrect assumptions, leading to regressions.
+
+### 3. **Untracked Dependencies:**
+   - **Code Dependencies:** Changes in one part of the codebase might affect other areas if the dependencies are not well understood or tracked, causing regressions.
+   - **Environmental Dependencies:** Differences in development, testing, and production environments can lead to validation failures if not properly managed.
+
+### 4. **Insufficient Change Management:**
+   - **Code Merges:** If PRs are not carefully reviewed and tested before merging, they can introduce regressions.
+   - **Feature Toggles:** Improper management of feature toggles can result in regressions if old features are unintentionally affected by the toggles.
+
+### 5. **Inadequate Documentation:**
+   - **Code Changes:** Lack of documentation on recent code changes or fixes can lead to misunderstandings and incorrect implementations.
+   - **Test Cases:** Poorly documented or outdated test cases can cause tests to miss relevant scenarios, leading to validation failures.
+
+### 6. **Unreliable Test Automation:**
+   - **Flaky Tests:** Automated tests that are unreliable or inconsistent can give false positives/negatives, masking real issues or incorrectly signaling failures.
+   - **Lack of Continuous Integration:** Without continuous integration practices, new changes might not be thoroughly tested across all environments, leading to regressions.
+
+### 7. **Human Error:**
+   - **Code Mistakes:** Simple mistakes, such as typos, incorrect logic, or failure to follow coding standards, can introduce regressions.
+   - **Manual Testing Errors:** Manual testing is prone to human error, especially when repetitive tasks are involved.
+
+Addressing these root causes requires a combination of improved testing strategies, better communication, thorough documentation, and robust change management practices.
