@@ -1,31 +1,24 @@
-#import <Foundation/Foundation.h>
+- (void)runCommandWithRetry:(NSInteger)maxRetries delay:(NSTimeInterval)delay {
+    [self runCommandWithAttempt:0 maxRetries:maxRetries delay:delay];
+}
 
-int main(int argc, const char * argv[]) {
-    @autoreleasepool {
-        // 创建 NSTask 实例
-        NSTask *task = [[NSTask alloc] init];
-        
-        // 设置要执行的命令
-        task.launchPath = @"/usr/bin/find";
-        
-        // 设置命令的参数
-        task.arguments = @[@"/Users/lucas/Desktop/0-test", @"-maxdepth", @"1", @"-name", @"bb*", @"!", @"-name", @"bb", @"-exec", @"mv", @"{}", @"/Users/lucas/Desktop/0-test/bb/", @";"];
-        
-        // 创建一个用于接收命令输出的管道
-        NSPipe *pipe = [NSPipe pipe];
-        task.standardOutput = pipe;
-        
-        // 启动任务
-        [task launch];
-        [task waitUntilExit];
-        
-        // 获取输出
-        NSFileHandle *file = [pipe fileHandleForReading];
-        NSData *data = [file readDataToEndOfFile];
-        NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-        
-        // 打印输出
-        NSLog(@"Command output: %@", output);
+- (void)runCommandWithAttempt:(NSInteger)attempt maxRetries:(NSInteger)maxRetries delay:(NSTimeInterval)delay {
+    BOOL success = [self runCommand]; // Replace with your actual command
+
+    if (!success && attempt < maxRetries) {
+        NSLog(@"Attempt %ld failed, retrying in %.2f seconds...", (long)attempt + 1, delay);
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [self runCommandWithAttempt:attempt + 1 maxRetries:maxRetries delay:delay];
+        });
+    } else if (!success) {
+        NSLog(@"Command failed after %ld attempts.", (long)maxRetries);
+    } else {
+        NSLog(@"Command succeeded on attempt %ld.", (long)attempt + 1);
     }
-    return 0;
+}
+
+- (BOOL)runCommand {
+    // Your actual command logic here
+    // Return YES if it succeeds, NO if it fails
+    return arc4random_uniform(2); // Example: randomly succeeds or fails
 }
