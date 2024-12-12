@@ -1,1 +1,1 @@
-df -h / | awk 'NR==2 {printf("Free: %.2f%%\n", ($4/$2)*100)}'
+z
