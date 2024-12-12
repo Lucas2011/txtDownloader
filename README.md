@@ -1,1 +1,1 @@
-free | grep Mem | awk '{print $4/$2 * 100.0 "%"}'
+awk '/MemTotal/ {total=$2} /MemAvailable/ {available=$2} END {printf "%.2f%\n", (available/total)*100}' /proc/meminfo
