@@ -1,1 +1,1 @@
-awk '/MemTotal/ {total=$2} /MemAvailable/ {available=$2} END {printf "%.2f%\n", (available/total)*100}' /proc/meminfo
+df -h / | awk 'NR==2 {printf("Free: %.2f%%\n", ($4/$2)*100)}'
