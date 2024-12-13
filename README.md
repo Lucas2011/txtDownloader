@@ -1,68 +1,34 @@
 import Foundation
 
-// 将日期字符串转换为Unix时间戳
-func dateToUnixTimestamp(dateString: String) -> TimeInterval? {
-    let dateFormatter = DateFormatter()
-    dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-    if let date = dateFormatter.date(from: dateString) {
-        return date.timeIntervalSince1970
-    }
-    return nil
-}
+// 输入字符串
+let inputString = "日志时间是：2023-11-11 11-11-11，其他信息跟在后面。"
 
-// 逐行读取文件并检测时间戳间隔
-func checkTimeStampGaps(in filePath: String) {
-    do {
-        let fileHandle = try FileHandle(forReadingAtPath: filePath)
-        guard let fileHandle = fileHandle else {
-            print("无法打开文件")
-            return
-        }
-        
-        var previousTimestamp: TimeInterval?
-        var previousTimeString: String?
-        
-        while let line = try fileHandle.readLine() {
-            let components = line.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
+// 匹配日期时间的正则表达式
+let pattern = #"\d{4}-\d{2}-\d{2} \d{2}-\d{2}-\d{2}"#
+
+if let regex = try? NSRegularExpression(pattern: pattern) {
+    // 搜索匹配结果
+    let range = NSRange(location: 0, length: inputString.utf16.count)
+    if let match = regex.firstMatch(in: inputString, options: [], range: range) {
+        if let matchedRange = Range(match.range, in: inputString) {
+            let matchedString = String(inputString[matchedRange])
             
-            // 确保文件格式正确，并且提取时间戳
-            if components.count > 1, let timestamp = dateToUnixTimestamp(dateString: String(components[0] + " " + components[1])) {
-                if let prevTimestamp = previousTimestamp, timestamp - prevTimestamp > 5 {
-                    // 如果时间戳间隔超过5秒，输出间隔信息
-                    if let prevTimeString = previousTimeString {
-                        print("Gap detected: \(prevTimeString) -> \(line.split(separator: " ", maxSplits: 2)[0] + " " + line.split(separator: " ", maxSplits: 2)[1]) (Gap: \(timestamp - prevTimestamp) seconds)")
-                    }
-                }
-                previousTimestamp = timestamp
-                previousTimeString = String(components[0] + " " + components[1])
-            }
-        }
-        
-        fileHandle.closeFile()
-    } catch {
-        print("文件读取错误: \(error)")
-    }
-}
-
-// 扩展 FileHandle 以支持逐行读取
-extension FileHandle {
-    func readLine() throws -> String? {
-        var line = Data()
-        while true {
-            let byte = try self.read(upToCount: 1)
-            if let byte = byte {
-                if byte == 10 || byte == 13 { // 新行字符
-                    break
-                }
-                line.append(byte)
+            // 将时间字符串转换为标准格式
+            let standardTimeString = matchedString.replacingOccurrences(of: "-", with: ":", options: .literal, range: matchedString.range(of: " ")!)
+            
+            // 使用 DateFormatter 解析为 Date
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+            if let date = dateFormatter.date(from: standardTimeString) {
+                let timestamp = date.timeIntervalSince1970
+                print("匹配到的时间戳：\(timestamp)")
             } else {
-                break
+                print("时间格式转换失败")
             }
         }
-        return line.isEmpty ? nil : String(data: line, encoding: .utf8)
+    } else {
+        print("未匹配到任何时间")
     }
+} else {
+    print("正则表达式无效")
 }
-
-// 调用方法
-let filePath = "/path/to/your/log.txt"
-checkTimeStampGaps(in: filePath)
