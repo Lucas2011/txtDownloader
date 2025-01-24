@@ -1,1 +1,1 @@
-curl -w "Time_Total: %{time_total}s\nSpeed_Download: %{speed_download} bytes/sec\nSize_Download: %{size_download} bytes\n" -o /dev/null -s --max-time 5 <URL>
+1
