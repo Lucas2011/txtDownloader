@@ -1,16 +1,26 @@
-NSString *isoDateString = @"2025-04-11T03:45:10.779718Z";
-    NSRange dotRange = [isoDateString rangeOfString:@"."];
-    
-    if (dotRange.location != NSNotFound) {
-        isoDateString = [isoDateString substringToIndex:dotRange.location];
-    }
-    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-    formatter.dateFormat = @"yyyy-MM-dd'T'HH:mm:ss";
-    formatter.timeZone = [NSTimeZone timeZoneWithAbbreviation:@"UTC"];
-    NSDate *parsedDate = [formatter dateFromString:isoDateString];
-    if (parsedDate) {
-        NSDate *now = [NSDate date];
-        NSTimeInterval timeDiff = fabs([now timeIntervalSinceDate:parsedDate]);
-        NSInteger roundedTimeDiff = (NSInteger)ceil(timeDiff);
-        NSLog(@"Time difference in seconds: %ld", roundedTimeDiff);
-    }
+#import <Foundation/Foundation.h>
+
+NSString *extractIPAddress(NSString *input, BOOL withPrefix) {
+    if (!input || input.length == 0) {
+        return nil;
+    }
+
+    NSError *error = nil;
+    // 使用正则匹配 IP:PORT
+    NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"(\\d{1,3}(?:\\.\\d{1,3}){3}:\\d+)"
+                                                                           options:0
+                                                                             error:&error];
+
+    NSTextCheckingResult *match = [regex firstMatchInString:input options:0 range:NSMakeRange(0, input.length)];
+
+    if (match && match.range.location != NSNotFound) {
+        NSString *ipPort = [input substringWithRange:match.range];
+        if (withPrefix) {
+            return [NSString stringWithFormat:@"http://%@/", ipPort];
+        } else {
+            return ipPort;
+        }
+    }
+
+    return nil; // 如果没匹配上，就返回 nil
+}
