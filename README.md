@@ -1,52 +1,43 @@
-@interface DataManager : NSObject
+#import <Foundation/Foundation.h>
 
-@property (nonatomic, strong) NSManagedObjectContext *mainContext;
-
-- (void)updatePersonNameInBackground:(NSString *)newName;
-
+@interface NetworkManager : NSObject
+- (void)loadData;
 @end
 
+@implementation NetworkManager {
+    dispatch_queue_t _syncQueue;
+}
 
-@implementation DataManager
-
-- (instancetype)initWithMainContext:(NSManagedObjectContext *)context {
+- (instancetype)init {
     self = [super init];
     if (self) {
-        _mainContext = context; // 传入主线程 context，通常是 AppDelegate 的 mainContext
+        _syncQueue = dispatch_queue_create("com.example.syncQueue", DISPATCH_QUEUE_CONCURRENT);
     }
     return self;
 }
 
-- (void)updatePersonNameInBackground:(NSString *)newName {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        // 直接使用主线程的 context，线程不安全！
-        NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Person"];
-        NSError *error = nil;
-        NSArray *results = [self.mainContext executeFetchRequest:fetchRequest error:&error]; // ❌
+- (void)loadData {
+    dispatch_group_t group = dispatch_group_create();
 
-        if (results.count > 0) {
-            Person *person = results.firstObject;
-            person.name = newName; // 直接在后台线程修改主线程对象，线程不安全！
+    __block NSMutableArray *results = [NSMutableArray array];
 
-            NSError *saveError = nil;
-            [self.mainContext save:&saveError]; // 直接在后台线程保存主线程 context，线程不安全！
-        }
-    });
+    for (int i = 0; i < 3; i++) {
+        dispatch_group_enter(group);
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            sleep(arc4random_uniform(2) + 1);
+            NSString *result = [NSString stringWithFormat:@"Result %d", i];
 
-    // 这里创建了一个后台 context，但下面直接操作没有使用 performBlock
-    NSManagedObjectContext *backgroundContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
-    backgroundContext.parentContext = self.mainContext;
+            dispatch_barrier_sync(self->_syncQueue, ^{
+                [results addObject:result];
+            });
 
-    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Person"];
-    NSError *error = nil;
-    NSArray *results = [backgroundContext executeFetchRequest:fetchRequest error:&error]; // ❌ 直接操作后台 context，没用 performBlock
-
-    if (results.count > 0) {
-        Person *person = results.firstObject;
-        person.name = newName;
-
-        [backgroundContext save:&error]; // 只保存了子 context，没保存 parent context
+            dispatch_group_leave(group);
+        });
     }
+
+    dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+        NSLog(@"All data loaded: %@", results);
+    });
 }
 
 @end
