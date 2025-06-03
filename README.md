@@ -1,43 +1,26 @@
-#import <Foundation/Foundation.h>
+Candidate Interview Feedback – iOS Developer
 
-@interface NetworkManager : NSObject
-- (void)loadData;
-@end
+Candidate Name: Zhang San
+Interview Date: June 3, 2025
+Interviewer: Li Si
+Interview Focus: GCD, Core Data (Technical Round 1)
 
-@implementation NetworkManager {
-    dispatch_queue_t _syncQueue;
-}
+⸻
 
-- (instancetype)init {
-    self = [super init];
-    if (self) {
-        _syncQueue = dispatch_queue_create("com.example.syncQueue", DISPATCH_QUEUE_CONCURRENT);
-    }
-    return self;
-}
+🧠 Technical Evaluation:
 
-- (void)loadData {
-    dispatch_group_t group = dispatch_group_create();
+1. GCD (Grand Central Dispatch)
+	•	The candidate was presented with a basic design question related to GCD. After an idle/thinking period of around 1–2 minutes, they produced a near-perfect and well-structured answer.
+	•	The response closely resembled content commonly found in public tutorials or AI-generated explanations, lacking personalized insight or project-based examples.
+	•	When asked follow-up questions about the reasoning behind the design and debugging experience, the candidate was unable to elaborate meaningfully. This raises concerns about the depth of independent understanding and practical experience.
 
-    __block NSMutableArray *results = [NSMutableArray array];
+2. Core Data
+	•	The candidate demonstrated familiarity with basic Core Data concepts, such as data models, managed object contexts, and save operations.
+	•	When given a real-world multithreading scenario (intentionally containing 3 common mistakes), the candidate was unable to identify any of the issues or suggest debugging strategies.
+	•	Their understanding of thread isolation, context synchronization, and safe data access was limited, and they lacked a structured approach to debugging and problem-solving in Core Data environments.
 
-    for (int i = 0; i < 3; i++) {
-        dispatch_group_enter(group);
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            sleep(arc4random_uniform(2) + 1);
-            NSString *result = [NSString stringWithFormat:@"Result %d", i];
+⸻
 
-            dispatch_barrier_sync(self->_syncQueue, ^{
-                [results addObject:result];
-            });
+🧑‍⚖️ Overall Assessment:
 
-            dispatch_group_leave(group);
-        });
-    }
-
-    dispatch_group_notify(group, dispatch_get_main_queue(), ^{
-        NSLog(@"All data loaded: %@", results);
-    });
-}
-
-@end
+The candidate possesses some theoretical knowledge but shows weaknesses in practical, hands-on scenarios. Responses around GCD appeared overly polished and potentially pre-rehearsed, warranting caution around independent problem-solving ability. Core Data debugging skills were insufficient.
