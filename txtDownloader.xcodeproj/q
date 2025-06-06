@@ -1,0 +1,118 @@
+功能要求：
+	1.	从后台服务器拉取用户信息列表（JSON）。
+	•	使用异步网络请求，避免阻塞主线程。
+	2.	将用户数据同步到 Core Data 中。
+	•	如果用户已存在（通过 id 匹配），更新其 name 字段。
+	•	如果不存在，可忽略或插入（不强制要求）。
+	•	要求线程安全：所有 Core Data 操作不能造成崩溃或数据冲突。
+	3.	任务完成后通知主线程刷新 UI（例如通过回调、通知或 delegate）。
+	4.	并发控制：同一时间只允许有一个同步任务运行。
+	•	连续多次点击“刷新”按钮不会触发多个并发同步。
+
+import Foundation
+import CoreData
+import UIKit
+
+class UserSyncService {
+
+    static let shared = UserSyncService()
+
+    private let persistentContainer: NSPersistentContainer
+    private let syncQueue = DispatchQueue(label: "com.company.user.sync.queue", qos: .background)
+    private let semaphore = DispatchSemaphore(value: 1)  // 控制同时只允许 1 个同步任务
+
+    private init() {
+        persistentContainer = (UIApplication.shared.delegate as! AppDelegate).persistentContainer
+    }
+
+    // MARK: - Public API
+
+    func startSync(completion: (() -> Void)? = nil) {
+        syncQueue.async { [weak self] in
+            guard let self = self else { return }
+
+            // 🔒 信号量控制并发
+            let waitResult = self.semaphore.wait(timeout: .now())
+            guard waitResult == .success else {
+                print("⏳ Sync already in progress, skipping new request.")
+                return
+            }
+
+            print("🚀 Starting user sync task...")
+
+            self.fetchUserJSON { jsonList in
+                self.syncToCoreData(jsonList: jsonList)
+
+                // 通知主线程
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: .userSyncCompleted, object: nil)
+                    completion?()
+                }
+
+                // ✅ 信号量释放
+                self.semaphore.signal()
+            }
+        }
+    }
+
+    // MARK: - Private Helpers
+
+    private func fetchUserJSON(completion: @escaping ([[String: Any]]) -> Void) {
+        // 模拟网络请求
+        DispatchQueue.global().asyncAfter(deadline: .now() + 1.0) {
+            let dummyJSON: [[String: Any]] = [
+                [
+                    "id": "6F9619FF-8B86-D011-B42D-00C04FC964FF",
+                    "name": "Alice Updated",
+                    "email": "alice@updated.com"
+                ],
+                [
+                    "id": "7A29AAFC-5FBB-4BAE-81B0-3BA2B12F1A59",
+                    "name": "Bob Updated",
+                    "email": "bob@updated.com"
+                ]
+            ]
+            completion(dummyJSON)
+        }
+    }
+
+    private func syncToCoreData(jsonList: [[String: Any]]) {
+        let context = persistentContainer.newBackgroundContext()
+        context.automaticallyMergesChangesFromParent = true
+
+        context.performAndWait {
+            for json in jsonList {
+                guard let idStr = json["id"] as? String,
+                      let id = UUID(uuidString: idStr) else { continue }
+
+                let fetch: NSFetchRequest<User> = User.fetchRequest()
+                fetch.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+                fetch.fetchLimit = 1
+
+                let user: User
+                if let existing = try? context.fetch(fetch).first {
+                    user = existing
+                } else {
+                    user = User(context: context)
+                    user.id = id
+                }
+
+                user.name = json["name"] as? String
+                user.email = json["email"] as? String
+            }
+
+            do {
+                try context.save()
+                print("✅ Core Data write success.")
+            } catch {
+                print("❌ Core Data error: \(error)")
+            }
+        }
+    }
+}
+
+// MARK: - 通知名定义
+
+extension Notification.Name {
+    static let userSyncCompleted = Notification.Name("UserSyncCompletedNotification")
+}
