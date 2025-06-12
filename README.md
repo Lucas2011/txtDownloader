@@ -1,23 +1,26 @@
-
 #import <UIKit/UIKit.h>
 
-typedef void (^WatchAlertCallback)(NSString * _Nullable result);
+typedef NS_ENUM(NSInteger, WatchAlertResult) {
+    WatchAlertResultYes,
+    WatchAlertResultNo,
+    WatchAlertResultTimeout
+};
+
+typedef void (^WatchAlertCallback)(WatchAlertResult result);
 
 @interface WatchAlertView : UIView
 
-/// 初始化 Alert
 - (instancetype)initWithTitle:(NSString *)title
                       message:(NSString *)message
                     showNoBtn:(BOOL)showNo
                      callback:(WatchAlertCallback)callback;
 
-/// 展示 Alert（传入父视图 & 超时时间）
 - (void)showInView:(UIView *)parentView timeout:(NSTimeInterval)timeout;
 
 @end
 
+
 #import "WatchAlertView.h"
-#import <QuartzCore/QuartzCore.h>
 
 @interface WatchAlertView ()
 @property (nonatomic, strong) UIVisualEffectView *blurView;
@@ -39,13 +42,13 @@ typedef void (^WatchAlertCallback)(NSString * _Nullable result);
         self.callback = callback;
         self.responded = NO;
 
-        // 1️⃣ 模糊背景
+        // 模糊背景
         UIBlurEffect *blur = [UIBlurEffect effectWithStyle:UIBlurEffectStyleDark];
         self.blurView = [[UIVisualEffectView alloc] initWithEffect:blur];
         self.blurView.frame = self.bounds;
         [self addSubview:self.blurView];
 
-        // 2️⃣ 中心弹窗容器
+        // 弹窗视图
         CGFloat dialogW = screenBounds.size.width * 0.85;
         CGFloat dialogH = 150;
         self.dialogView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, dialogW, dialogH)];
@@ -56,6 +59,7 @@ typedef void (^WatchAlertCallback)(NSString * _Nullable result);
 
         CGFloat padding = 10;
 
+        // Title
         UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(padding, padding, dialogW - 2*padding, 22)];
         titleLabel.text = title;
         titleLabel.textColor = [UIColor whiteColor];
@@ -65,6 +69,7 @@ typedef void (^WatchAlertCallback)(NSString * _Nullable result);
         titleLabel.minimumScaleFactor = 0.5;
         [self.dialogView addSubview:titleLabel];
 
+        // Message
         UILabel *messageLabel = [[UILabel alloc] initWithFrame:CGRectMake(padding, 40, dialogW - 2*padding, 40)];
         messageLabel.text = message;
         messageLabel.textColor = [UIColor lightGrayColor];
@@ -75,7 +80,7 @@ typedef void (^WatchAlertCallback)(NSString * _Nullable result);
         messageLabel.minimumScaleFactor = 0.5;
         [self.dialogView addSubview:messageLabel];
 
-        // 3️⃣ 按钮
+        // Buttons
         CGFloat buttonY = 95;
         CGFloat buttonW = 60;
 
@@ -119,7 +124,7 @@ typedef void (^WatchAlertCallback)(NSString * _Nullable result);
     if (timeout > 0) {
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeout * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             if (!self.responded) {
-                [self performCallback:@"timeout"];
+                [self performCallback:WatchAlertResultTimeout];
             }
         });
     }
@@ -127,17 +132,17 @@ typedef void (^WatchAlertCallback)(NSString * _Nullable result);
 
 - (void)yesTapped {
     if (!self.responded) {
-        [self performCallback:@"yes"];
+        [self performCallback:WatchAlertResultYes];
     }
 }
 
 - (void)noTapped {
     if (!self.responded) {
-        [self performCallback:@"no"];
+        [self performCallback:WatchAlertResultNo];
     }
 }
 
-- (void)performCallback:(NSString *)result {
+- (void)performCallback:(WatchAlertResult)result {
     self.responded = YES;
     __weak typeof(self) weakSelf = self;
 
@@ -154,6 +159,29 @@ typedef void (^WatchAlertCallback)(NSString * _Nullable result);
         });
     });
 }
+
 @end
 
 
+#import "WatchAlertView.h"
+
+...
+
+WatchAlertView *alert = [[WatchAlertView alloc] initWithTitle:@"删除项目"
+                                                      message:@"该操作无法撤销，是否继续？"
+                                                    showNoBtn:YES
+                                                     callback:^(WatchAlertResult result) {
+    switch (result) {
+        case WatchAlertResultYes:
+            NSLog(@"✅ 用户点击了 Yes");
+            break;
+        case WatchAlertResultNo:
+            NSLog(@"❌ 用户点击了 No");
+            break;
+        case WatchAlertResultTimeout:
+            NSLog(@"⌛ 超时无响应");
+            break;
+    }
+}];
+
+[alert showInView:self.view timeout:5];
