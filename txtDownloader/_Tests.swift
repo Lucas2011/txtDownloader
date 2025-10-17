@@ -1,76 +1,68 @@
-- (void)runMultipleFTPCurlTasks:(NSArray<NSString *> *)ftpURLs {
-    dispatch_group_t group = dispatch_group_create();
-    NSDate *startTime = [NSDate date];
+import Foundation
 
-    for (NSString *ftpURL in ftpURLs) {
-        dispatch_group_enter(group);
+class SafeTimer {
+    static let shared = SafeTimer()
 
-        NSTask *task = [[NSTask alloc] init];
-        task.launchPath = @"/usr/bin/curl";
+    private var timer: DispatchSourceTimer?
+    private let lockQueue = DispatchQueue(label: "com.safetimer.lock")
+    private let timerQueue = DispatchQueue(label: "com.safetimer.queue")
+    
+    private var interval: TimeInterval = 10
+    
+    private init() {}
 
-        // 使用三层超时保护参数
-        task.arguments = @[
-            @"--no-buffer",             // 实时输出
-            @"--connect-timeout", @"10",// TCP连接超时保护
-            @"--max-time", @"30",       // 总体任务超时保护
-            ftpURL
-        ];
-
-        NSPipe *pipe = [NSPipe pipe];
-        NSFileHandle *fileHandle = pipe.fileHandleForReading;
-        task.standardOutput = pipe;
-        task.standardError = pipe;
-
-        NSLog(@"[%.2fs] 🚀 启动任务: %@", [[NSDate date] timeIntervalSinceDate:startTime], ftpURL);
-
-        // 实时监听输出
-        __block id observer = [[NSNotificationCenter defaultCenter] addObserverForName:NSFileHandleReadCompletionNotification
-                                                                                object:fileHandle
-                                                                                 queue:[NSOperationQueue mainQueue]
-                                                                            usingBlock:^(NSNotification *note) {
-            NSData *data = note.userInfo[NSFileHandleNotificationDataItem];
-            if (data.length > 0) {
-                NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-                NSTimeInterval elapsed = [[NSDate date] timeIntervalSinceDate:startTime];
-                NSLog(@"[%@][%.2fs] %@", ftpURL, elapsed, output);
-
-                // 继续监听
-                [fileHandle readInBackgroundAndNotify];
-            } else {
-                [[NSNotificationCenter defaultCenter] removeObserver:observer];
+   
+    func start(interval: TimeInterval = 10, immediately: Bool = false) {
+        lockQueue.async { [weak self] in
+            guard let self = self else { return }
+            if self.timer != nil { return }
+            
+            self.interval = interval
+            
+            if immediately {
+                self.executeTask()
             }
-        }];
-
-        // 启动任务
-        [task launch];
-        [fileHandle readInBackgroundAndNotify];
-
-        // terminationHandler：确保 dispatch_group_leave 被调用
-        task.terminationHandler = ^(NSTask *terminatedTask) {
-            NSTimeInterval elapsed = [[NSDate date] timeIntervalSinceDate:startTime];
-            NSLog(@"[%@][%.2fs] ✅ 任务结束，退出码: %d", ftpURL, elapsed, terminatedTask.terminationStatus);
-            dispatch_group_leave(group);
-        };
-
-        // 第三层超时保护（硬中断 curl）
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(40 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            if ([task isRunning]) {
-                NSTimeInterval elapsed = [[NSDate date] timeIntervalSinceDate:startTime];
-                NSLog(@"[%@][%.2fs] ⚠️ 超时强制终止任务", ftpURL, elapsed);
-                [task terminate];
+            
+            let timer = DispatchSource.makeTimerSource(queue: self.timerQueue)
+            timer.schedule(deadline: .now() + interval, repeating: interval)
+            
+            timer.setEventHandler { [weak self] in
+                self?.executeTask()
             }
-        });
+            
+            timer.resume()
+            self.timer = timer
+            print("✅ Timer started with interval: \(interval)s")
+        }
     }
-
-    // 所有任务完成后统一处理
-    dispatch_group_notify(group, dispatch_get_main_queue(), ^{
-        NSTimeInterval total = [[NSDate date] timeIntervalSinceDate:startTime];
-        NSLog(@"🎉 所有 FTP 下载任务完成，总耗时：%.2fs", total);
-        [self doNextStepAfterAllFTPDownloads];
-    });
-}
-
-// 示例后续逻辑方法
-- (void)doNextStepAfterAllFTPDownloads {
-    NSLog(@"✅ 进入后续处理逻辑，例如合并数据、通知用户等");
+    
+    
+    func stop() {
+        lockQueue.async { [weak self] in
+            guard let self = self else { return }
+            if let timer = self.timer {
+                timer.cancel()
+                self.timer = nil
+                print("🛑 Timer stopped")
+            }
+        }
+    }
+    
+  
+    private func executeTask() {
+        DispatchQueue.global().async { [weak self] in
+            guard let self = self else { return }
+            do {
+                try self.task()
+            } catch {
+                print("⚠️ Task error: \(error)")
+            }
+        }
+    }
+    
+    
+    private func task() throws {
+        print("⏱ Task running at \(Date()) on thread: \(Thread.current)")
+        Thread.sleep(forTimeInterval: 2) 
+    }
 }
